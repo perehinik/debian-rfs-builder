@@ -25,24 +25,24 @@ echo $(losetup -a)
 
 echo;echo;echo "DEBOOTSTRAP FIRST STAGE"; echo
 debootstrap --arch=arm64 --foreign $DEB_VER_NAME ./rootfs http://ftp.debian.org/debian/
+cp ./second-stage.sh ./rootfs
+cp -r ./src/* ./rootfs
 sync
 umount "${LOOP_DEVICE}" 
 losetup -D
 
-echo;echo;echo "RUN QEMU" echo;
-
-apt install -y iproute2 vim
+echo;echo;echo "DEBOOTSTRAP SECOND STAGE"; echo;
 
 qemu-system-aarch64 \
-	-machine virt \
-	-cpu cortex-a57 \
-	-m 4G \
-	-smp 4 \
-	-nographic \
-	-kernel Image.gz \
-	-drive if=none,file=rootfs.img,format=raw,id=mydisk \
-	-device virtio-blk-device,drive=mydisk \
-	-append "rootwait root=/dev/vda init=/bin/sh rw" \
-	-device virtio-net-device,netdev=usernet \
-    	-netdev user,id=usernet
+    -machine virt \
+    -cpu cortex-a57 \
+    -m 4G \
+    -smp 4 \
+    -nographic \
+    -kernel Image.gz \
+    -drive if=none,file=rootfs.img,format=raw,id=mydisk \
+    -device virtio-blk-device,drive=mydisk \
+    -append "rootwait root=/dev/vda init=/second-stage.sh rw" \
+    -device virtio-net-device,netdev=usernet \
+    -netdev user,id=usernet
 
