@@ -22,6 +22,7 @@ sync
 # echo;echo;echo "BOOT DEBIAN"; echo;
 # exec /sbin/init
 
+echo;echo;echo "BUILD SUCCESS. SHUTTING DOWN QEMU MACHINE"; echo;
+
 # Shutdown system so Qemu exits
-shutdown -h now || /bin/true
-reboot --halt -f
+reboot --halt -f || shutdown -h now

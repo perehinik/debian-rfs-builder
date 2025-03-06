@@ -3,13 +3,13 @@
 readonly LOOP_DEVICE=/dev/loop8
 readonly DEB_VER_NAME=bookworm
 
-echo;echo;echo "INSTALL DEPENDENCIES"; echo
-apt-get update
+# echo;echo;echo "INSTALL DEPENDENCIES"; echo
+# apt-get update
 ## Debootstrap
-apt-get install -y debootstrap
+# apt-get install -y debootstrap
 
 ## Dependencies for QEMU
-apt install -y qemu-system-arm qemu-system qemu-utils
+# apt install -y qemu-system-arm qemu-system qemu-utils
 
 echo;echo;echo "CREATE QEMU IMAGE"; echo
 mkdir -p ./rootfs
