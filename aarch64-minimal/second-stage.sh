@@ -1,18 +1,19 @@
 #!/bin/sh
 
+# let debootstrap install everything
 /debootstrap/debootstrap --second-stage
 
-sync
+# move poweroff binary from root to /sbin
+# It can't be done in steps.s. Looks like debootstrap removes it.
+mv /poweroff /sbin
 
 # Enable internet from host
 dhclient eth0
 
-# Install additional packages
-apt update
-apt install -y vim
-
-# Set password for root
-echo "root:root" | /sbin/chpasswd
+echo;echo;echo "EXECUTE USER SCRIPTS"; echo;
+cd /user_steps
+/user_steps/steps-user.sh || /bin/true
+cd /
 
 sync
 # # Start shell if needed, for debug
@@ -22,7 +23,9 @@ sync
 # echo;echo;echo "BOOT DEBIAN"; echo;
 # exec /sbin/init
 
+apt clean
+
 echo;echo;echo "BUILD SUCCESS. SHUTTING DOWN QEMU MACHINE"; echo;
 
 # Shutdown system so Qemu exits
-reboot --halt -f || shutdown -h now
+poweroff || reboot --halt -f || shutdown -h now

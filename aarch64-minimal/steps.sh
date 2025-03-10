@@ -3,13 +3,9 @@
 readonly LOOP_DEVICE=/dev/loop8
 readonly DEB_VER_NAME=bookworm
 
-# echo;echo;echo "INSTALL DEPENDENCIES"; echo
-# apt-get update
-## Debootstrap
-# apt-get install -y debootstrap
-
-## Dependencies for QEMU
-# apt install -y qemu-system-arm qemu-system qemu-utils
+echo;echo;echo "BUILD TOOLS"; echo
+echo "Building poweroff command"
+aarch64-linux-gnu-gcc -o ./src/poweroff ./tools/poweroff.c
 
 echo;echo;echo "CREATE QEMU IMAGE"; echo
 mkdir -p ./rootfs
@@ -24,9 +20,11 @@ echo $(losetup -l)
 echo $(losetup -a)
 
 echo;echo;echo "DEBOOTSTRAP FIRST STAGE"; echo
-debootstrap --arch=arm64 --foreign $DEB_VER_NAME ./rootfs http://ftp.debian.org/debian/
+debootstrap --arch=arm64 --variant=minbase --include=isc-dhcp-client --foreign $DEB_VER_NAME ./rootfs http://ftp.debian.org/debian/
 cp ./second-stage.sh ./rootfs
-cp -r ./src/* ./rootfs
+cp -r -a ./src/* ./rootfs
+cp -r ./user_steps ./rootfs
+
 sync
 umount "${LOOP_DEVICE}" 
 losetup -D
@@ -46,3 +44,4 @@ qemu-system-aarch64 \
     -device virtio-net-device,netdev=usernet \
     -netdev user,id=usernet
 
+rm -r ./rootfs/
