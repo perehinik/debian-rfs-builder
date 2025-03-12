@@ -45,7 +45,7 @@ fi
 
 # Check if USER_STEPS_SCRIPT is present and executable in the specified directory
 USER_STEPS_PATH="$USER_SCRIPT_DIR/$USER_STEPS_SCRIPT"
-if [ ! -x "$USER_STEPS_PATH" ]; then
+if [ -n "${USER_SCRIPT_OPTIO}" ] && [ ! -x "$USER_STEPS_PATH" ]; then
     echo "Error: '$USER_STEPS_SCRIPT' is not found or is not executable in the directory '$USER_SCRIPT_DIR'."
     exit 1
 fi

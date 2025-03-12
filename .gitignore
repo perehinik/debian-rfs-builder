@@ -1,4 +1,4 @@
-./aarch64-minimal/src/poweroff
-./aarch64-minimal/rootfs/
+aarch64-minimal/src/poweroff
+aarch64-minimal/rootfs/
 
 rootfs.img
