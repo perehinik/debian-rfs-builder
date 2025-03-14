@@ -2,3 +2,5 @@ aarch64-minimal/src/poweroff
 aarch64-minimal/rootfs/
 
 rootfs.img
+
+custom_steps

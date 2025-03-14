@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_IMAGE=debian-rfs-builder:1.0.1
+DOCKER_IMAGE=perehiniak/linux-build-tools:1.0.0
 USER_SCRIPT_DIR=""
 USER_STEPS_SCRIPT="steps-user.sh"
 USER_SCRIPT_OPTION=""
@@ -48,11 +48,6 @@ USER_STEPS_PATH="$USER_SCRIPT_DIR/$USER_STEPS_SCRIPT"
 if [ -n "${USER_SCRIPT_OPTIO}" ] && [ ! -x "$USER_STEPS_PATH" ]; then
     echo "Error: '$USER_STEPS_SCRIPT' is not found or is not executable in the directory '$USER_SCRIPT_DIR'."
     exit 1
-fi
-
-# Build docker image if it's not present
-if [ -z "$(docker images -q ${DOCKER_IMAGE} 2> /dev/null)" ]; then
-  docker build . -t ${DOCKER_IMAGE}
 fi
 
 docker run -it \
