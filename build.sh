@@ -50,6 +50,8 @@ if [ -n "${USER_SCRIPT_OPTIO}" ] && [ ! -x "$USER_STEPS_PATH" ]; then
     exit 1
 fi
 
+rm -rf ./dist
+
 docker run -it \
 	--rm \
 	--privileged \
@@ -60,4 +62,5 @@ docker run -it \
 	--entrypoint ./steps.sh \
 	${DOCKER_IMAGE}
 
-mv -f ./aarch64-minimal/rootfs.img ./
+mkdir ./dist
+mv -f ./aarch64-minimal/rootfs.img ./dist
