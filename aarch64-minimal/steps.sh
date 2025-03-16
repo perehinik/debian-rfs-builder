@@ -1,12 +1,12 @@
 #!/bin/bash
 
-readonly LOOP_DEVICE=/dev/loop8
 readonly DEB_VER_NAME=bookworm
 readonly BUILD_DIR=/tmp/debian-build
 
 rm -rf ${BUILD_DIR}
 mkdir -p ${BUILD_DIR}/rootfs
 cp -r -a ./* ${BUILD_DIR}
+losetup -D
 
 pushd ${BUILD_DIR}
 
@@ -15,11 +15,8 @@ echo "Building poweroff command"
 aarch64-linux-gnu-gcc -o ${BUILD_DIR}/src/poweroff ./tools/poweroff.c
 
 echo;echo;echo "CREATE IMAGE"; echo
-umount "${LOOP_DEVICE}" || /bin/true
-losetup -D || /bin/true
-
 dd if=/dev/zero of=${BUILD_DIR}/rootfs.img bs=1 count=0 seek=4G
-losetup "${LOOP_DEVICE}" ${BUILD_DIR}/rootfs.img
+LOOP_DEVICE=$(losetup -f ${BUILD_DIR}/rootfs.img --show)
 mkfs.ext4 "${LOOP_DEVICE}"
 mount -o loop "${LOOP_DEVICE}" ${BUILD_DIR}/rootfs
 echo $(losetup -l --raw)
@@ -35,8 +32,8 @@ cp ${BUILD_DIR}/second-stage.sh ${BUILD_DIR}/rootfs
 cp -r ${BUILD_DIR}/user_steps ${BUILD_DIR}/rootfs
 sync
 umount "${LOOP_DEVICE}"
-umount ${BUILD_DIR}/rootfs
-losetup -D
+umount "${BUILD_DIR}/rootfs"
+losetup -d "${LOOP_DEVICE}"
 
 echo;echo;echo "DEBOOTSTRAP SECOND STAGE"; echo;
 
@@ -57,15 +54,15 @@ popd
 
 
 echo;echo;echo "CLEANUP"; echo;
-losetup "${LOOP_DEVICE}" ${BUILD_DIR}/rootfs.img
+LOOP_DEVICE="$(losetup -f ${BUILD_DIR}/rootfs.img --show)"
 mount -o loop "${LOOP_DEVICE}" ${BUILD_DIR}/rootfs
 rm -f ${BUILD_DIR}/rootfs/second-stage.sh
 rm -rf ${BUILD_DIR}/rootfs/user_steps
 ls -l ${BUILD_DIR}/rootfs
 sync
 umount "${LOOP_DEVICE}"
-umount ${BUILD_DIR}/rootfs
-losetup -D
+umount "${BUILD_DIR}/rootfs"
+losetup -d "${LOOP_DEVICE}"
 
 cp ${BUILD_DIR}/rootfs.img ./
 rm -r ${BUILD_DIR}
