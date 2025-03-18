@@ -1,6 +1,5 @@
 aarch64-minimal/src/poweroff
 aarch64-minimal/rootfs/
+dist/
+build/
 
-rootfs.img
-
-custom_steps

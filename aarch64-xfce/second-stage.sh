@@ -10,6 +10,14 @@ mv /poweroff /sbin
 # Enable internet from host
 dhclient eth0
 
+# Install xfce
+apt-get update
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y xfce4 xfce4-goodies
+apt-get install -y lightdm
+systemctl enable lightdm
+export DEBIAN_FRONTEND=interactive
+
 echo;echo;echo "EXECUTE USER SCRIPTS"; echo;
 cd /postinst
 /postinst/postinst.sh || /bin/true
@@ -28,4 +36,4 @@ apt clean
 echo;echo;echo "BUILD SUCCESS. SHUTTING DOWN QEMU MACHINE"; echo;
 
 # Shutdown system so Qemu exits
-poweroff || reboot --halt -f || shutdown -h now
+reboot --halt -f || shutdown -h now

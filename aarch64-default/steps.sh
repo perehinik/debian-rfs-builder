@@ -1,14 +1,10 @@
 #!/bin/bash
 
 readonly DEB_VER_NAME=bookworm
-readonly IMAGE_NAME=rootfs-${DEB_VER_NAME}-minimal.img
+readonly IMAGE_NAME=rootfs-${DEB_VER_NAME}.img
 
 mkdir -p ./rootfs
 losetup -D
-
-echo;echo;echo "BUILD TOOLS"; echo
-echo "Building poweroff command"
-aarch64-linux-gnu-gcc -o ./src/poweroff ./tools/poweroff.c
 
 echo;echo;echo "CREATE IMAGE"; echo
 dd if=/dev/zero of=./${IMAGE_NAME} bs=1 count=0 seek=4G
@@ -19,8 +15,6 @@ echo $(losetup -l --raw)
 
 echo;echo;echo "DEBOOTSTRAP FIRST STAGE"; echo
 debootstrap --arch=arm64 \
-	--variant=minbase \
-	--include=isc-dhcp-client \
 	--foreign $DEB_VER_NAME \
 	./rootfs http://ftp.debian.org/debian/
 

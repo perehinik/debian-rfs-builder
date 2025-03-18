@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo; echo "--- Using default steps-user.sh ---"; echo;
+echo; echo "--- Using default postinst.sh ---"; echo;
 
-echo "Set password root for user root"
+echo "Set password 'root' for user 'root'"
 echo "root:root" | /sbin/chpasswd
 
 # Install additional packages

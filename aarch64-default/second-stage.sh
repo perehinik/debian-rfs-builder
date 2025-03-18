@@ -28,4 +28,4 @@ apt clean
 echo;echo;echo "BUILD SUCCESS. SHUTTING DOWN QEMU MACHINE"; echo;
 
 # Shutdown system so Qemu exits
-poweroff || reboot --halt -f || shutdown -h now
+reboot --halt -f || shutdown -h now
