@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 POSTINST_SCRIPT_PATH="./postinst/postinst.sh"
 IMAGE_VERSION="default"
