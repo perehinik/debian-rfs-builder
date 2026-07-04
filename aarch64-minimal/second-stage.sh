@@ -1,31 +1,26 @@
 #!/bin/sh
+set -e
 
-# let debootstrap install everything
+print_step() {
+    echo
+    echo
+    echo "=== $1 ==="
+    echo
+}
+
+print_step "DEBOOTSTRAP SECOND STAGE"
+
+# Let debootstrap install everything
 /debootstrap/debootstrap --second-stage
 
-# move poweroff binary from root to /sbin
-# It can't be done in steps.s. Looks like debootstrap removes it.
-mv /poweroff /sbin
 
-# Enable internet from host
-dhclient eth0
-
-echo;echo;echo "EXECUTE USER SCRIPTS"; echo;
-cd /postinst
-/postinst/postinst.sh || /bin/true
-cd /
+print_step "CREATE QEMU ENVIRONMENT"
+cd /qemu_env
+./create-qemu-env.sh
 
 sync
-# # Start shell if needed, for debug
-# exec /bin/sh
 
-# # Boot Debian
-# echo;echo;echo "BOOT DEBIAN"; echo;
-# exec /sbin/init
+print_step "SECOND STAGE COMPLETE - SHUTTING DOWN"
 
-apt clean
-
-echo;echo;echo "BUILD SUCCESS. SHUTTING DOWN QEMU MACHINE"; echo;
-
-# Shutdown system so Qemu exits
+# Shutdown system so QEMU exits
 poweroff || reboot --halt -f || shutdown -h now
