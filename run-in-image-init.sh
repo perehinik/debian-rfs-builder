@@ -19,6 +19,7 @@ THIS_SCRIPT_DIR="$(dirname "$THIS_SCRIPT_PATH")"
 IMAGE_NAME=""
 SCRIPT_PATH=""
 COPY_DIR=""
+ROOTFS_DIR="./build/rootfs"
 KERNEL_IMAGE="${THIS_SCRIPT_DIR}/kernel/Image.gz"
 QEMU_LOG="./build/qemu.log"
 USE_DOCKER=0
@@ -51,14 +52,12 @@ if [ "$USE_DOCKER" = "1" ] && [ -z "${INSIDE_DOCKER:-}" ]; then
     exec docker run -it \
         --rm \
         --privileged \
-        --network host \
         -e INSIDE_DOCKER=1 \
-        -v "$PWD:/root" \
-        -v "$HOME/.ssh:/root/.ssh:ro" \
+        -v ./:/root \
         -w /root \
         -u root \
         --entrypoint "$0" \
-        "$DOCKER_IMAGE" \
+        ${DOCKER_IMAGE} \
         "$@"
 fi
 
@@ -73,89 +72,51 @@ if [ -n "$COPY_DIR" ] && [ ! -d "$COPY_DIR" ]; then
     exit 1
 fi
 
-SSH_PORT=2222
-SSH_USER=qemu
-SSH_HOST=localhost
-
-REMOTE_DIR=/tmp/qemu_env
+REMOTE_DIR=/qemu_env
 REMOTE_SCRIPT="$(basename "$SCRIPT_PATH")"
 
-SSH_OPTS=(
-    -p "$SSH_PORT"
-    -o StrictHostKeyChecking=no
-    -o UserKnownHostsFile=/dev/null
-)
 
-SCP_OPTS=(
-    -P "$SSH_PORT"
-    -o StrictHostKeyChecking=no
-    -o UserKnownHostsFile=/dev/null
-)
+echo "run-in-image copy files"
+mkdir -p "${ROOTFS_DIR}"
+losetup -D
+LOOP_DEVICE="$(losetup -f ./${IMAGE_NAME} --show)"
+mount -o loop "${LOOP_DEVICE}" "${ROOTFS_DIR}"
 
-ssh_exec() {
-    local SSH_COMMAND="$1"
-    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${SSH_HOST}" "${SSH_COMMAND}"
-}
-
-scp_copy() {
-    local SCP_SRC="$1"
-    if [ -d "${SCP_SRC}" ]; then
-        echo "Copy $SCP_SRC/* to ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-        scp -r "${SCP_OPTS[@]}" "${SCP_SRC}/*" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-    elif [ -f "${SCP_SRC}" ]; then
-        echo "Copy ${SCP_SRC} to ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-        scp "${SCP_OPTS[@]}" "${SCP_SRC}" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-    else
-        echo "Does not exist (or is another type)"
-    fi
-}
-
-cleanup() {
-    if kill -0 "$QEMU_PID" 2>/dev/null; then
-        kill "$QEMU_PID" 2>/dev/null || true
-    fi
-}
-trap cleanup EXIT
-
-echo "Start Qemu"
-
-apt update && apt install -y openssh-client
+mkdir -p "${ROOTFS_DIR}/${REMOTE_DIR}"
+cp -a "${SCRIPT_PATH}" "${ROOTFS_DIR}/${REMOTE_DIR}"
+if [ ${COPY_DIR} != "" ]; then
+    cp -ra "${COPY_DIR}/." "${ROOTFS_DIR}/${REMOTE_DIR}"
+fi
+sync
+ls -l "${ROOTFS_DIR}"
+umount "${LOOP_DEVICE}" || true
+umount "${ROOTFS_DIR}" || true
+losetup -d "${LOOP_DEVICE}" || true
 
 
+
+echo "run-in-image start qemu"
 qemu-system-aarch64 \
     -machine virt \
     -cpu cortex-a57 \
     -m 4G \
     -smp 4 \
     -nographic \
-    -kernel "$KERNEL_IMAGE" \
-    -drive if=none,file="$IMAGE_NAME",format=raw,id=mydisk \
+    -kernel "${KERNEL_IMAGE}" \
+    -drive if=none,file=${IMAGE_NAME},format=raw,id=mydisk \
     -device virtio-blk-device,drive=mydisk \
-    -append "rootwait root=/dev/vda rw net.ifnames=0" \
+    -append "rootwait root=/dev/vda init=${REMOTE_DIR}/${REMOTE_SCRIPT} rw" \
     -device virtio-net-device,netdev=usernet \
-    -netdev user,id=usernet,hostfwd=tcp::${SSH_PORT}-:22 \
-    > "$QEMU_LOG" 2>&1 &
-QEMU_PID=$!
+    -netdev user,id=usernet
 
-until ssh_exec true; do
-    echo "Waiting for SSH..."
-    sleep 2
-done
 
-ssh_exec "mkdir -p '$REMOTE_DIR'"
-ssh_exec "rm -rf '$REMOTE_DIR'/*"
 
-scp_copy "$SCRIPT_PATH"
-
-if [ -n "$COPY_DIR" ]; then
-    scp_copy "$COPY_DIR"/*
-fi
-
-ssh_exec "cd ${REMOTE_DIR} && ./$REMOTE_SCRIPT"
-ssh_exec "rm -rf '$REMOTE_DIR'/*"
-ssh_exec "sync"
-
-ssh_exec "sudo poweroff"
-
-wait "$QEMU_PID"
-trap - EXIT
+echo "run-in-image cleanup"
+LOOP_DEVICE="$(losetup -f ./${IMAGE_NAME} --show)"
+mount -o loop "${LOOP_DEVICE}" "${ROOTFS_DIR}"
+rm -rf "${ROOTFS_DIR}/qemu_env"
+ls -l "${ROOTFS_DIR}"
+sync
+umount "${LOOP_DEVICE}" || true
+umount "${ROOTFS_DIR}" || true
+losetup -d "${LOOP_DEVICE}" || true
