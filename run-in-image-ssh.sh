@@ -134,7 +134,7 @@ qemu-system-aarch64 \
     -append "rootwait root=/dev/vda rw net.ifnames=0" \
     -device virtio-net-device,netdev=usernet \
     -netdev user,id=usernet,hostfwd=tcp::${SSH_PORT}-:22 \
-    > "$QEMU_LOG" 2>&1 &
+    > /dev/null 2>&1 &
 QEMU_PID=$!
 
 until ssh_exec true; do
@@ -144,6 +144,7 @@ done
 
 ssh_exec "mkdir -p '$REMOTE_DIR'"
 ssh_exec "rm -rf '$REMOTE_DIR'/*"
+ssh_exec "sudo date -s '$(date '+%Y-%m-%d %H:%M:%S')'"
 
 scp_copy "$SCRIPT_PATH"
 

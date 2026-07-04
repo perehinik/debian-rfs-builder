@@ -63,18 +63,20 @@ if [ ! -f ./build/key.pub ]; then
 fi
 
 # Build rootfs
-./build/first-stage.sh "${DOCKER_OPTION}"
+cd ./build
+    ./first-stage.sh "${DOCKER_OPTION}"
+cd ..
 
 ./run-in-image-init.sh "${DOCKER_OPTION}" \
                     -i ./build/rootfs-bookworm-${IMAGE_VERSION}.img \
                     -s ./aarch64-${IMAGE_VERSION}/second-stage.sh \
                     -c ./aarch64-${IMAGE_VERSION}
 
-
-./run-in-image-ssh.sh "${DOCKER_OPTION}" \
+if [ ${IMAGE_VERSION} != "minimal" ]; then
+    ./run-in-image-ssh.sh "${DOCKER_OPTION}" \
                     -i ./build/rootfs-bookworm-${IMAGE_VERSION}.img \
                     -s ./aarch64-${IMAGE_VERSION}/postinst.sh \
-
+fi
 
 mkdir ./dist
 mv -f ./build/rootfs-bookworm-${IMAGE_VERSION}.img ./dist

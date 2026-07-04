@@ -4,7 +4,7 @@ set -e
 pushd "$(dirname "$0")" > /dev/null
 
 readonly DEB_VER_NAME=bookworm
-readonly IMAGE_NAME=rootfs-${DEB_VER_NAME}-minimal.img
+readonly IMAGE_NAME=rootfs-${DEB_VER_NAME}-default.img
 
 print_step() {
     echo
@@ -38,10 +38,6 @@ fi
 mkdir -p ./rootfs
 losetup -D
 
-print_step "BUILD TOOLS"
-echo "Building poweroff command"
-aarch64-linux-gnu-gcc -o ./poweroff ./tools/poweroff.c
-
 print_step "CREATE IMAGE"
 dd if=/dev/zero of=./${IMAGE_NAME} bs=1 count=0 seek=4G
 chown 1000:1000 ./${IMAGE_NAME} || true
@@ -52,8 +48,6 @@ echo $(losetup -l --raw)
 
 print_step "DEBOOTSTRAP FIRST STAGE"
 debootstrap --arch=arm64 \
-	--variant=minbase \
-	--include=isc-dhcp-client \
 	--foreign $DEB_VER_NAME \
 	./rootfs http://ftp.debian.org/debian/
 
@@ -61,7 +55,6 @@ print_step "COPY FILES"
 mkdir -p ./rootfs/qemu_env
 date "+%Y-%m-%d %H:%M:%S" > ./rootfs/qemu_env/saved-date.txt
 chmod 666 ./rootfs/qemu_env/saved-date.txt
-mv ./poweroff ./rootfs/qemu_env
 cp ./key.pub ./rootfs/qemu_env
 
 print_step "FIRST STAGE CLEANUP"
