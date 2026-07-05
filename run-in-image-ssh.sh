@@ -101,7 +101,7 @@ scp_copy() {
     local SCP_SRC="$1"
     if [ -d "${SCP_SRC}" ]; then
         echo "Copy $SCP_SRC/* to ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
-        scp -r "${SCP_OPTS[@]}" "${SCP_SRC}/*" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
+        scp -r "${SCP_OPTS[@]}" "${SCP_SRC}"/* "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
     elif [ -f "${SCP_SRC}" ]; then
         echo "Copy ${SCP_SRC} to ${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
         scp "${SCP_OPTS[@]}" "${SCP_SRC}" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}"
@@ -149,7 +149,7 @@ ssh_exec "sudo date -s '$(date '+%Y-%m-%d %H:%M:%S')'"
 scp_copy "$SCRIPT_PATH"
 
 if [ -n "$COPY_DIR" ]; then
-    scp_copy "$COPY_DIR"/*
+    scp_copy "$COPY_DIR"
 fi
 
 ssh_exec "cd ${REMOTE_DIR} && ./$REMOTE_SCRIPT"
