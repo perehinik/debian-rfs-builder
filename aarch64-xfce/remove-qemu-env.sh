@@ -29,3 +29,6 @@ print_step "REMOVE QEMU ETH CONNECTIONS"
 rm -f /etc/network/interfaces.d/qemu-*.cfg
 
 print_step "DONE"
+sync
+
+poweroff || reboot --halt -f || shutdown -h now
